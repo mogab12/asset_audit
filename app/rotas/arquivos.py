@@ -1,11 +1,12 @@
 """Importar/exportar planilhas e resolver conflitos."""
+import shutil
 from datetime import datetime
 
 from flask import (Blueprint, flash, redirect, render_template, request,
                    send_file, url_for)
 
 import config
-from app import mesclagem, planilha, repositorio
+from app import db, mesclagem, planilha, repositorio
 from app.utils import compactar
 
 bp = Blueprint("arquivos", __name__)
@@ -13,7 +14,8 @@ bp = Blueprint("arquivos", __name__)
 
 @bp.route("/arquivos")
 def pagina():
-    return render_template("arquivos.html", resumo=repositorio.resumo())
+    return render_template("arquivos.html", resumo=repositorio.resumo(),
+                           total_referencia=repositorio.total_referencia_effort())
 
 
 @bp.route("/importar", methods=["POST"])
@@ -79,6 +81,57 @@ def limpar():
     repositorio.limpar_tudo()
     flash("Base apagada. Importe uma nova planilha para começar.", "ok")
     return redirect(url_for("principal.inicio"))
+
+
+def _recarregar_referencia(caminho):
+    linhas = planilha.ler_referencia_effort(caminho.read_bytes())
+    repositorio.salvar_referencia_effort(linhas)
+    db.obter().commit()
+    return len(linhas)
+
+
+def garantir_referencia_inicial():
+    """Chamado uma vez na criação do app: garante que a base do Effort não fique vazia."""
+    if repositorio.total_referencia_effort() > 0:
+        return
+    if not config.ARQUIVO_EQUIPAMENTOS_ATIVO.exists():
+        config.PASTA_DADOS.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(config.ARQUIVO_EQUIPAMENTOS_PADRAO, config.ARQUIVO_EQUIPAMENTOS_ATIVO)
+    _recarregar_referencia(config.ARQUIVO_EQUIPAMENTOS_ATIVO)
+
+
+@bp.route("/equipamentos/importar", methods=["POST"])
+def importar_equipamentos():
+    arquivo = request.files.get("arquivo_equipamentos")
+    if not arquivo or not arquivo.filename:
+        flash("Selecione a planilha de equipamentos.", "erro")
+        return redirect(url_for("arquivos.pagina"))
+
+    conteudo = arquivo.read()
+    try:
+        linhas = planilha.ler_referencia_effort(conteudo)
+    except planilha.ErroPlanilha as erro:
+        flash(f"{arquivo.filename}: {erro}", "erro")
+        return redirect(url_for("arquivos.pagina"))
+    except Exception as erro:
+        flash(f"{arquivo.filename}: não foi possível ler ({erro}).", "erro")
+        return redirect(url_for("arquivos.pagina"))
+
+    config.PASTA_DADOS.mkdir(parents=True, exist_ok=True)
+    config.ARQUIVO_EQUIPAMENTOS_ATIVO.write_bytes(conteudo)
+    repositorio.salvar_referencia_effort(linhas)
+    db.obter().commit()
+    flash(f"Base de equipamentos atualizada: {len(linhas)} equipamentos carregados.", "ok")
+    return redirect(url_for("arquivos.pagina"))
+
+
+@bp.route("/equipamentos/reverter", methods=["POST"])
+def reverter_equipamentos():
+    config.PASTA_DADOS.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(config.ARQUIVO_EQUIPAMENTOS_PADRAO, config.ARQUIVO_EQUIPAMENTOS_ATIVO)
+    total = _recarregar_referencia(config.ARQUIVO_EQUIPAMENTOS_ATIVO)
+    flash(f"Base de equipamentos revertida para o padrão: {total} equipamentos.", "ok")
+    return redirect(url_for("arquivos.pagina"))
 
 
 @bp.route("/conflitos")

@@ -18,6 +18,9 @@ def criar_app():
     app.register_blueprint(auditoria.bp)
     app.register_blueprint(arquivos.bp)
 
+    with app.app_context():
+        arquivos.garantir_referencia_inicial()
+
     app.jinja_env.filters["nome_curto"] = nome_curto
     app.jinja_env.filters["tag_valida"] = tag_valida
 

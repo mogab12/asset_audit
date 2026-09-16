@@ -227,6 +227,45 @@ p { margin: 0 0 .8em; }
 
 .cabecalho-setor { margin-bottom: 1rem; }
 .cabecalho-setor .progresso { max-width: 420px; }
+.cabecalho-setor__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cabecalho-setor__linha h1 { margin: 0; }
+
+/* ---------- Leitor de QR code ---------- */
+.leitor-qr {
+  width: min(92vw, 480px);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 1rem;
+  background: var(--superficie);
+}
+.leitor-qr::backdrop { background: rgba(10, 20, 20, .55); }
+.leitor-qr__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .6rem;
+}
+.leitor-qr video, .leitor-qr canvas {
+  width: 100%;
+  border-radius: var(--raio);
+  background: #000;
+}
+.leitor-qr__status {
+  margin: .8rem 0 0;
+  padding: .6rem .8rem;
+  border-radius: var(--raio);
+  background: var(--cinza-claro);
+  color: var(--suave);
+}
+.leitor-qr__status--ok { background: var(--verde-claro); color: var(--verde-escuro); }
+.leitor-qr__status--aviso { background: var(--ambar-claro); color: var(--ambar); }
+.leitor-qr__status--erro { background: var(--vermelho-claro); color: var(--vermelho); }
+#botao-trocar-camera { margin-top: .6rem; }
 
 /* ---------- Pesquisa ---------- */
 .barra-fixa {

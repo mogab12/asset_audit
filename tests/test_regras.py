@@ -9,8 +9,9 @@ import config
 _pasta = tempfile.mkdtemp()
 config.PASTA_DADOS = Path(_pasta)
 config.ARQUIVO_BANCO = Path(_pasta) / "teste.db"
+config.ARQUIVO_EQUIPAMENTOS_ATIVO = Path(_pasta) / "Equipamentos.xlsx"
 
-from app import criar_app, mesclagem, planilha, repositorio  # noqa: E402
+from app import criar_app, db, mesclagem, planilha, repositorio  # noqa: E402
 from app.utils import compactar, gerar_chave, tag_valida  # noqa: E402
 
 
@@ -101,6 +102,68 @@ class TestImportacao(unittest.TestCase):
         repositorio.limpar_tudo()
         r = mesclagem.importar(lidos, "reimportado.xlsx")
         self.assertEqual(r["novos"], 2)
+
+
+class TestLeitorQR(unittest.TestCase):
+    def setUp(self):
+        self.app = criar_app()
+        self.contexto = self.app.app_context()
+        self.contexto.push()
+        repositorio.limpar_tudo()
+        repositorio.salvar_referencia_effort([{
+            "id_effort": "16933", "tag": "ACIOB-0004", "ns": "", "patrimonio": "",
+            "equipamento": "ACIONADOR DE BANHEIRO (CHAMADA ENF.)",
+            "modelo": "MODELO GENERICO", "setor": "UNIDADE DE ADULTOS",
+        }])
+        repositorio.salvar_preferencia("auditor", "ANA")
+        db.obter().commit()
+        self.cliente = self.app.test_client()
+
+    def tearDown(self):
+        self.contexto.pop()
+
+    def test_ler_planilha_referencia_do_effort(self):
+        conteudo = config.ARQUIVO_EQUIPAMENTOS_PADRAO.read_bytes()
+        linhas = planilha.ler_referencia_effort(conteudo)
+        self.assertTrue(linhas)
+        encontrado = next(l for l in linhas if l["id_effort"] == "13567")
+        self.assertEqual(encontrado["tag"], "ACIOB-0004")
+        self.assertEqual(encontrado["setor"], "UNIDADE DE ADULTOS")
+
+    def test_escaneamento_cria_e_audita_no_setor_certo(self):
+        resposta = self.cliente.post("/item/escanear", json={
+            "texto": "https://huusp.globalthings.net/Mobile/MEquipamentoPropriedade.aspx?eqp=16933",
+            "setor": "UNIDADE DE ADULTOS",
+        })
+        dados = resposta.get_json()
+        self.assertTrue(dados["ok"])
+        self.assertEqual(dados["motivo"], "Conforme")
+
+        criado = repositorio.por_id_effort("16933")
+        self.assertIsNotNone(criado)
+        self.assertEqual(criado["tag"], "ACIOB-0004")
+        self.assertEqual(criado["motivo"], "Conforme")
+
+    def test_escaneamento_marca_encontrado_em_outro_local(self):
+        resposta = self.cliente.post("/item/escanear",
+                                     json={"texto": "eqp=16933", "setor": "UTI ADULTO"})
+        self.assertEqual(resposta.get_json()["motivo"], "Encontrado em outro local")
+
+    def test_id_nao_encontrado_na_referencia(self):
+        resposta = self.cliente.post("/item/escanear",
+                                     json={"texto": "eqp=999999", "setor": "X"})
+        self.assertEqual(resposta.status_code, 404)
+        self.assertFalse(resposta.get_json()["ok"])
+
+    def test_segunda_leitura_usa_o_link_ja_feito(self):
+        self.cliente.post("/item/escanear", json={"texto": "eqp=16933", "setor": "UNIDADE DE ADULTOS"})
+        primeiro = repositorio.por_id_effort("16933")
+
+        resposta = self.cliente.post("/item/escanear",
+                                     json={"texto": "eqp=16933", "setor": "UNIDADE DE ADULTOS"})
+        segundo = resposta.get_json()
+        self.assertEqual(segundo["item_id"], primeiro["id"])
+        self.assertEqual(repositorio.todos().__len__(), 1)
 
 
 if __name__ == "__main__":

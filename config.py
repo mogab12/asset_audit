@@ -13,6 +13,13 @@ PASTA_BASE = Path(__file__).resolve().parent
 PASTA_DADOS = PASTA_BASE / "dados"
 ARQUIVO_BANCO = PASTA_DADOS / "auditoria.db"
 
+# Base de equipamentos do Effort (ID, TAG, Setor...), usada pelo leitor de QR code.
+# O arquivo "padrão" vem com o aplicativo; o "ativo" é a cópia em uso, substituível
+# pela tela de Planilhas (com botão para reverter ao padrão).
+PASTA_DADOS_PADRAO = PASTA_BASE / "dados_padrao"
+ARQUIVO_EQUIPAMENTOS_PADRAO = PASTA_DADOS_PADRAO / "Equipamentos.xlsx"
+ARQUIVO_EQUIPAMENTOS_ATIVO = PASTA_DADOS / "Equipamentos.xlsx"
+
 # ---------------------------------------------------------------------------
 # Servidor
 # ---------------------------------------------------------------------------
@@ -91,3 +98,24 @@ CAMPOS_COMPARACAO = [
     "status", "modelo", "tag", "ns", "patrimonio",
     "setor_atual", "motivo", "observacao",
 ]
+
+# ---------------------------------------------------------------------------
+# Leitor de QR code
+# ---------------------------------------------------------------------------
+# Colunas usadas da planilha bruta de equipamentos do Effort (bem mais larga
+# que a planilha de Auditoria acima). Só o necessário para achar o item pelo
+# ID do QR code é lido; o resto das colunas da planilha é ignorado.
+COLUNAS_REFERENCIA_EFFORT = {
+    "id_effort": "ID",
+    "tag": "TAG",
+    "ns": "Nº de Série",
+    "patrimonio": "Patrimônio",
+    "equipamento": "Equipamento",
+    "modelo": "Modelo",
+    "setor": "Setor",
+}
+
+# O QR code do Effort traz uma URL como
+# https://huusp.globalthings.net/Mobile/MEquipamentoPropriedade.aspx?eqp=16933
+# — o que interessa é o número depois de "eqp=".
+PADRAO_URL_EFFORT = r"eqp=(\d+)"

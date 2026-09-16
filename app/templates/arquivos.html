@@ -60,6 +60,28 @@
   {% endif %}
 </section>
 
+<section class="bloco cartao">
+  <h2>Base de equipamentos (Effort)</h2>
+  <p class="suave">
+    Planilha bruta de equipamentos exportada do Effort (colunas ID, TAG, Setor...), usada
+    pelo leitor de QR code para achar o equipamento a partir do ID lido no código.
+    Atualmente com <strong>{{ total_referencia }}</strong> equipamentos carregados.
+  </p>
+  <form method="post" action="{{ url_for('arquivos.importar_equipamentos') }}"
+        enctype="multipart/form-data" class="formulario">
+    <div class="campo">
+      <label for="arquivo_equipamentos">Planilha de equipamentos (.xls ou .xlsx)</label>
+      <input id="arquivo_equipamentos" type="file" name="arquivo_equipamentos"
+             accept=".xls,.xlsx" required>
+    </div>
+    <button type="submit" class="botao botao--principal">Atualizar base</button>
+  </form>
+  <form method="post" action="{{ url_for('arquivos.reverter_equipamentos') }}"
+        class="linha-form" data-confirmar="Reverter a base de equipamentos para o padrão do aplicativo?">
+    <button type="submit" class="botao botao--discreto">Reverter para o padrão</button>
+  </form>
+</section>
+
 <section class="bloco cartao cartao--perigo">
   <h2>Apagar base</h2>
   <p class="suave">Remove todos os equipamentos e conflitos deste computador. Exporte antes se precisar guardar o trabalho.</p>

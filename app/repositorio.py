@@ -24,6 +24,7 @@ def preparar(item):
     limpo["chave"] = item.get("chave") or gerar_chave(limpo)
     limpo["setor_grupo"] = limpo["setor_origem"] or limpo["setor_atual"] or "SEM SETOR"
     limpo["busca"] = "|".join(compactar(limpo[c]) for c in CAMPOS_BUSCA)
+    limpo["id_effort"] = texto(item.get("id_effort", ""))
     return limpo
 
 
@@ -50,18 +51,40 @@ def por_chave(chave):
     return _dict(linha)
 
 
+def por_id_effort(id_effort):
+    """Item já linkado a esse ID do Effort (leituras anteriores do mesmo QR code)."""
+    linha = db.obter().execute(
+        "SELECT * FROM equipamentos WHERE id_effort = ?", (str(id_effort),)).fetchone()
+    return _dict(linha)
+
+
+def por_tag(tag):
+    """Primeira correspondência exata de TAG (atual ou anterior), para linkar um ID novo."""
+    tag = tag.upper()
+    linha = db.obter().execute(
+        "SELECT * FROM equipamentos WHERE tag = ? OR tag_anterior = ? LIMIT 1",
+        (tag, tag)).fetchone()
+    return _dict(linha)
+
+
+def definir_id_effort(item_id, id_effort):
+    db.obter().execute(
+        "UPDATE equipamentos SET id_effort = ? WHERE id = ?", (str(id_effort), item_id))
+
+
 def inserir(item):
     item = preparar(item)
-    colunas = CAMPOS + ["chave", "setor_grupo", "busca"]
-    db.obter().execute(
+    colunas = CAMPOS + ["chave", "setor_grupo", "busca", "id_effort"]
+    cursor = db.obter().execute(
         f"INSERT INTO equipamentos ({', '.join(colunas)}) "
         f"VALUES ({', '.join('?' * len(colunas))})",
         [item[c] for c in colunas])
+    return cursor.lastrowid
 
 
 def atualizar(item_id, item):
     item = preparar(item)
-    colunas = CAMPOS + ["setor_grupo", "busca"]
+    colunas = CAMPOS + ["setor_grupo", "busca", "id_effort"]
     db.obter().execute(
         f"UPDATE equipamentos SET {', '.join(c + ' = ?' for c in colunas)} "
         "WHERE id = ?",
@@ -213,6 +236,32 @@ def conflito(conflito_id):
 
 def remover_conflito(conflito_id):
     db.obter().execute("DELETE FROM conflitos WHERE id = ?", (conflito_id,))
+
+
+# --- Base de equipamentos do Effort (leitor de QR code) --------------------
+
+CAMPOS_REFERENCIA_EFFORT = list(config.COLUNAS_REFERENCIA_EFFORT.keys())
+
+
+def salvar_referencia_effort(linhas):
+    """Substitui a base de referência inteira pelas linhas informadas."""
+    conexao = db.obter()
+    conexao.execute("DELETE FROM referencia_effort")
+    colunas = CAMPOS_REFERENCIA_EFFORT
+    conexao.executemany(
+        f"INSERT OR REPLACE INTO referencia_effort ({', '.join(colunas)}) "
+        f"VALUES ({', '.join('?' * len(colunas))})",
+        [[texto(linha.get(c)) for c in colunas] for linha in linhas])
+
+
+def total_referencia_effort():
+    return db.obter().execute("SELECT COUNT(*) FROM referencia_effort").fetchone()[0]
+
+
+def referencia_por_id(id_effort):
+    linha = db.obter().execute(
+        "SELECT * FROM referencia_effort WHERE id_effort = ?", (str(id_effort),)).fetchone()
+    return dict(linha) if linha else None
 
 
 # --- Preferências -----------------------------------------------------------

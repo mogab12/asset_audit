@@ -1,1 +1,5 @@
 O banco de dados (auditoria.db) é criado automaticamente nesta pasta.
+
+O Equipamentos.xlsx é a cópia ativa da base de equipamentos do Effort (usada pelo
+leitor de QR code). Também é criado automaticamente, a partir do padrão em
+dados_padrao/, e pode ser substituído pela tela Planilhas do aplicativo.

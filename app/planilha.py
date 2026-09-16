@@ -28,6 +28,11 @@ _TITULO_PARA_CAMPO = {
     _normalizar_titulo(titulo): campo for campo, titulo in config.COLUNAS.items()
 }
 
+_TITULO_PARA_CAMPO_EFFORT = {
+    _normalizar_titulo(titulo): campo
+    for campo, titulo in config.COLUNAS_REFERENCIA_EFFORT.items()
+}
+
 
 def _linhas_xlsx(conteudo):
     livro = load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
@@ -48,14 +53,18 @@ def _linhas_xls(conteudo):
         yield aba.row_values(i)
 
 
+def _linhas_detectadas(conteudo):
+    """Detecta o formato (xlsx/xls) pelo conteúdo, não pela extensão."""
+    if conteudo.startswith(ASSINATURA_XLSX):
+        return _linhas_xlsx(conteudo)
+    if conteudo.startswith(ASSINATURA_XLS):
+        return _linhas_xls(conteudo)
+    raise ErroPlanilha("O arquivo não parece ser uma planilha do Excel.")
+
+
 def ler(conteudo):
     """Recebe os bytes do arquivo e devolve uma lista de dicionários."""
-    if conteudo.startswith(ASSINATURA_XLSX):
-        linhas = _linhas_xlsx(conteudo)
-    elif conteudo.startswith(ASSINATURA_XLS):
-        linhas = _linhas_xls(conteudo)
-    else:
-        raise ErroPlanilha("O arquivo não parece ser uma planilha do Excel.")
+    linhas = _linhas_detectadas(conteudo)
 
     try:
         cabecalho = next(linhas)
@@ -80,6 +89,37 @@ def ler(conteudo):
         item = {campo: texto(linha[i]) if i < len(linha) else ""
                 for i, campo in mapa.items()}
         if any(item.values()):
+            itens.append(item)
+    return itens
+
+
+def ler_referencia_effort(conteudo):
+    """Lê a planilha bruta de equipamentos exportada do Effort (ID, TAG, Setor...).
+
+    É um formato bem mais largo que o de ler(); só as colunas listadas em
+    config.COLUNAS_REFERENCIA_EFFORT são aproveitadas, o resto é ignorado.
+    """
+    linhas = _linhas_detectadas(conteudo)
+
+    try:
+        cabecalho = next(linhas)
+    except StopIteration:
+        raise ErroPlanilha("A planilha está vazia.")
+
+    mapa = {}
+    for indice, titulo in enumerate(cabecalho):
+        campo = _TITULO_PARA_CAMPO_EFFORT.get(_normalizar_titulo(titulo))
+        if campo:
+            mapa[indice] = campo
+
+    if "id_effort" not in mapa.values():
+        raise ErroPlanilha("Coluna 'ID' não encontrada na planilha de equipamentos.")
+
+    itens = []
+    for linha in linhas:
+        item = {campo: texto(linha[i]) if i < len(linha) else ""
+                for i, campo in mapa.items()}
+        if item.get("id_effort"):
             itens.append(item)
     return itens
 

@@ -6,10 +6,28 @@
 <a class="voltar" href="{{ url_for('principal.inicio') }}">Todos os setores</a>
 
 <header class="cabecalho-setor">
-  <h1>{{ setor.nome }}</h1>
+  <div class="cabecalho-setor__linha">
+    <h1>{{ setor.nome }}</h1>
+    <button type="button" class="botao botao--principal" id="botao-ler-qr">Ler QR code</button>
+  </div>
   <p class="suave">{{ setor.auditados }} de {{ setor.total }} auditados ({{ setor.percentual }}%)</p>
   {{ ui.progresso(setor.auditados, setor.total, setor.percentual) }}
 </header>
+
+<dialog id="leitor-qr" class="leitor-qr">
+  <div class="leitor-qr__topo">
+    <strong>Ler QR code</strong>
+    <button type="button" class="botao botao--discreto" id="botao-fechar-qr">Fechar</button>
+  </div>
+  <video id="leitor-qr-video" playsinline muted autoplay></video>
+  <canvas id="leitor-qr-canvas" hidden></canvas>
+  <div class="campo" id="leitor-qr-foto" hidden>
+    <label for="leitor-qr-arquivo">Câmera ao vivo não disponível aqui. Tire uma foto do QR code:</label>
+    <input type="file" id="leitor-qr-arquivo" accept="image/*" capture="environment">
+  </div>
+  <button type="button" class="botao" id="botao-trocar-camera" hidden>Trocar câmera</button>
+  <p class="leitor-qr__status" id="leitor-qr-status" aria-live="polite">Aponte a câmera para o QR code do equipamento.</p>
+</dialog>
 
 <div class="barra-fixa">
   {{ ui.busca(url_for('principal.setor', nome=setor.nome), consulta, 'TAG, patrimônio, nº de série ou nome') }}
@@ -69,4 +87,12 @@
     </div>
   </section>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/vendor/jsQR.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/qr.js') }}"
+          data-setor="{{ setor.nome }}"
+          data-url-escanear="{{ url_for('auditoria.escanear') }}"
+          data-url-auditor="{{ url_for('principal.auditor', proximo=request.full_path) }}"></script>
 {% endblock %}

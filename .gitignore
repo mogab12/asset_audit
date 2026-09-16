@@ -5,4 +5,5 @@ __pycache__/
 .pytest_cache/
 dados/*.db
 dados/*.db-*
+dados/Equipamentos.xlsx
 .vscode/browse.vc.db*
