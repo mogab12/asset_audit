@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Auditoria de Ativos</string>
+    <string name="title_activity_main">Auditoria de Ativos</string>
+    <string name="package_name">com.auditoria.ativos</string>
+    <string name="custom_url_scheme">com.auditoria.ativos</string>
+</resources>

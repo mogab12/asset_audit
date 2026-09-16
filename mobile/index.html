@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Auditoria de Ativos</title>
+  <meta name="description" content="Auditoria de ativos hospitalares, funciona offline no celular.">
+  <meta name="theme-color" content="#1f4e5a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo__interno">
+      <a class="marca" href="#/">Auditoria de Ativos</a>
+      <nav class="menu">
+        <a href="#/">Setores</a>
+        <a href="#/arquivos">Planilhas</a>
+        <a id="link-conflitos" href="#/conflitos">Conflitos</a>
+      </nav>
+      <a class="auditor" id="link-auditor" href="#/auditor" title="Trocar auditor">Definir auditor</a>
+    </div>
+  </header>
+
+  <main class="pagina">
+    <div id="avisos"></div>
+    <div id="app"></div>
+  </main>
+
+  <script src="js/vendor/jsQR.js"></script>
+  <script src="js/vendor/xlsx.full.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
