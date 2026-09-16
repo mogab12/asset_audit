@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Conflitos{% endblock %}
+
+{% block conteudo %}
+<h1>Conflitos</h1>
+<p class="suave">
+  O mesmo equipamento foi auditado de formas diferentes. Escolha qual versão deve ficar.
+  As linhas destacadas mostram o que é diferente.
+</p>
+
+{% if not conflitos %}
+  <div class="vazio vazio--compacto">
+    <h2>Nenhum conflito pendente</h2>
+    <p>Tudo certo para exportar.</p>
+    <a class="botao botao--principal" href="{{ url_for('arquivos.pagina') }}">Ir para planilhas</a>
+  </div>
+{% endif %}
+
+{% for c in conflitos %}
+  {% set atual = c.atual or {} %}
+  {% set novo = c.importado %}
+  <section class="cartao conflito">
+    <h2>{{ (novo.equipamento or atual.equipamento) | nome_curto }}</h2>
+    <p class="suave">Setor de origem: {{ novo.setor_origem or atual.setor_origem or '—' }}</p>
+    <div class="tabela-rolagem">
+      <table class="comparacao">
+        <thead>
+          <tr><th>Campo</th><th>Versão A: na base</th><th>Versão B: {{ c.arquivo }}</th></tr>
+        </thead>
+        <tbody>
+          {% for campo, titulo in campos %}
+            {% set va = atual.get(campo) or '' %}
+            {% set vb = novo.get(campo) or '' %}
+            <tr class="{% if va | trim | upper != vb | trim | upper %}diferente{% endif %}">
+              <th scope="row">{{ titulo }}</th>
+              <td>{{ rotulos_motivo.get(va, va) if campo == 'motivo' else va }}</td>
+              <td>{{ rotulos_motivo.get(vb, vb) if campo == 'motivo' else vb }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <form method="post" action="{{ url_for('arquivos.resolver', conflito_id=c.id) }}" class="acoes">
+      <button class="botao" name="escolha" value="atual">Manter versão A</button>
+      <button class="botao" name="escolha" value="importado">Usar versão B</button>
+    </form>
+  </section>
+{% endfor %}
+{% endblock %}

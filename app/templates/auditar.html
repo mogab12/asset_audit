@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% import "_componentes.html" as ui with context %}
+{% block titulo %}Auditar {{ item.tag or item.patrimonio }}{% endblock %}
+
+{% block conteudo %}
+<a class="voltar" href="{{ url_for('principal.setor', nome=voltar) }}">{{ voltar }}</a>
+
+<header class="cabecalho-item">
+  <span class="selo selo--{{ ui.estado_classe(item) }}">{{ rotulos_motivo.get(item.motivo, item.motivo) }}</span>
+  <h1>{{ item.equipamento | nome_curto }}</h1>
+  <p class="suave">
+    Deveria estar em <strong>{{ item.setor_origem or 'setor não informado' }}</strong>
+    {% if not item.pendente %}
+      <br>Auditado por {{ item.executante or '—' }} em {{ item.data or '—' }}
+    {% endif %}
+  </p>
+</header>
+
+<form method="post" class="formulario" id="form-auditoria">
+  <input type="hidden" name="voltar" value="{{ voltar }}">
+
+  <div class="campo">
+    <label for="setor_atual">Onde foi encontrado</label>
+    <select id="setor_atual" name="setor_atual" data-origem="{{ item.setor_origem }}">
+      {% for s in setores %}
+        <option value="{{ s }}" {% if s == encontrado_em %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <p class="dica dica--azul" id="aviso-setor" hidden>
+      Diferente do setor de origem. Será registrado como “Encontrado em outro local”
+      se a situação da TAG for Conforme.
+    </p>
+  </div>
+
+  <fieldset class="campo">
+    <legend>Situação da TAG</legend>
+    <div class="opcoes">
+      {% for valor, rotulo in opcoes_motivo.items() %}
+        <label class="opcao opcao--{{ loop.index }}">
+          <input type="radio" name="motivo" value="{{ valor }}"
+                 {% if valor == motivo_selecionado %}checked{% endif %}>
+          <span>{{ rotulo }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    <p class="dica">“Pendente” mantém o item como não auditado.</p>
+  </fieldset>
+
+  <details class="campo identificacao" {% if not item.tag_ok %}open{% endif %}>
+    <summary>Conferir TAG, nº de série, patrimônio e modelo</summary>
+    <div class="grade">
+      <div>
+        <label for="tag">TAG</label>
+        <input id="tag" name="tag" value="{{ item.tag }}" class="maiusculo"
+               data-padrao="{{ padrao_tag }}" autocomplete="off">
+        <p class="dica dica--ambar" id="aviso-tag" {% if item.tag_ok %}hidden{% endif %}>
+          Fora do padrão (letras seguidas de números, ex.: BINF1234). Pode salvar, mas a TAG deve ser trocada.
+        </p>
+        {% if item.tag_anterior and item.tag_anterior != item.tag %}<p class="dica">Cadastro: {{ item.tag_anterior }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="ns">Nº de série</label>
+        <input id="ns" name="ns" value="{{ item.ns }}" autocomplete="off">
+        {% if item.ns_anterior and item.ns_anterior != item.ns %}<p class="dica">Cadastro: {{ item.ns_anterior }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="patrimonio">Patrimônio</label>
+        <input id="patrimonio" name="patrimonio" value="{{ item.patrimonio }}" autocomplete="off">
+        {% if item.patrimonio_anterior and item.patrimonio_anterior != item.patrimonio %}<p class="dica">Cadastro: {{ item.patrimonio_anterior }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="modelo">Modelo</label>
+        <input id="modelo" name="modelo" value="{{ item.modelo }}" autocomplete="off">
+        {% if item.modelo_anterior and item.modelo_anterior != item.modelo %}<p class="dica">Cadastro: {{ item.modelo_anterior }}</p>{% endif %}
+      </div>
+    </div>
+  </details>
+
+  <div class="campo">
+    <label for="observacao">Observação</label>
+    <textarea id="observacao" name="observacao" rows="3"
+              placeholder="Ex.: plaqueta descolando, QR code cortado, local onde foi encontrado">{{ item.observacao }}</textarea>
+  </div>
+
+  <div class="acoes">
+    <button type="submit" class="botao botao--principal botao--grande">Salvar auditoria</button>
+    <a class="botao" href="{{ url_for('principal.setor', nome=voltar) }}">Cancelar</a>
+  </div>
+</form>
+
+{% if not item.pendente %}
+  <form method="post" action="{{ url_for('auditoria.desfazer', item_id=item.id) }}" class="desfazer"
+        data-confirmar="Desfazer a auditoria e voltar o item para pendente?">
+    <input type="hidden" name="voltar" value="{{ voltar }}">
+    <button type="submit" class="botao botao--discreto">Desfazer auditoria</button>
+  </form>
+{% endif %}
+{% endblock %}

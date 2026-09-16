@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Inventário{% endblock %} - Auditoria de Ativos</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo__interno">
+      <a class="marca" href="{{ url_for('principal.inicio') }}">Auditoria de Ativos</a>
+      <nav class="menu">
+        <a href="{{ url_for('principal.inicio') }}">Setores</a>
+        <a href="{{ url_for('arquivos.pagina') }}">Planilhas</a>
+        <a href="{{ url_for('arquivos.conflitos') }}">
+          Conflitos{% if qtd_conflitos %} <span class="contador">{{ qtd_conflitos }}</span>{% endif %}
+        </a>
+      </nav>
+      <a class="auditor" href="{{ url_for('principal.auditor', proximo=request.full_path) }}"
+         title="Trocar auditor">
+        {{ auditor or 'Definir auditor' }}
+      </a>
+    </div>
+  </header>
+
+  <main class="pagina">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensagem in mensagens %}
+        <div class="aviso aviso--{{ categoria }}" role="status">{{ mensagem }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

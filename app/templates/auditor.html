@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Auditor{% endblock %}
+
+{% block conteudo %}
+<section class="cartao estreito">
+  <h1>Quem está auditando?</h1>
+  <p class="suave">O nome vai para a coluna “Executante” de cada equipamento que você registrar neste aparelho.</p>
+  <form method="post" class="formulario">
+    <input type="hidden" name="proximo" value="{{ proximo }}">
+    <div class="campo">
+      <label for="nome">Nome completo</label>
+      <input id="nome" name="nome" value="{{ auditor }}" class="maiusculo" required autofocus autocomplete="name">
+    </div>
+    <button type="submit" class="botao botao--principal botao--grande">Salvar nome</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "_componentes.html" as ui with context %}
+{% block titulo %}{{ setor.nome }}{% endblock %}
+
+{% block conteudo %}
+<a class="voltar" href="{{ url_for('principal.inicio') }}">Todos os setores</a>
+
+<header class="cabecalho-setor">
+  <h1>{{ setor.nome }}</h1>
+  <p class="suave">{{ setor.auditados }} de {{ setor.total }} auditados ({{ setor.percentual }}%)</p>
+  {{ ui.progresso(setor.auditados, setor.total, setor.percentual) }}
+</header>
+
+<div class="barra-fixa">
+  {{ ui.busca(url_for('principal.setor', nome=setor.nome), consulta, 'TAG, patrimônio, nº de série ou nome') }}
+</div>
+
+{% if consulta %}
+  <p class="resultado-info">
+    {{ itens | length }} resultado(s) neste setor para “{{ consulta }}”.
+    <a href="{{ url_for('principal.setor', nome=setor.nome) }}">Limpar pesquisa</a>
+  </p>
+
+  {% if not itens %}
+    {% if em_outros %}
+      <div class="alerta-outro-setor">
+        <h2>Nenhum resultado neste setor, mas há {{ em_outros | length }} em outro(s) setor(es)</h2>
+        <p>Se o equipamento está aqui na sua frente, abra-o para registrar que foi encontrado em {{ setor.nome }}.</p>
+        <div class="lista">
+          {% for item in em_outros %}
+            {{ ui.cartao_item(item, setor.nome, encontrado_em=setor.nome, mostrar_setor=True) }}
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="vazio vazio--compacto">
+        <h2>Nenhum equipamento encontrado em nenhum setor</h2>
+        <p>Confira a digitação ou pesquise por outro dado (TAG, patrimônio ou nº de série).</p>
+      </div>
+    {% endif %}
+  {% endif %}
+{% else %}
+  <nav class="abas" aria-label="Filtrar itens">
+    {% for chave, rotulo in filtros.items() %}
+      <a class="aba {% if chave == filtro %}aba--ativa{% endif %}"
+         href="{{ url_for('principal.setor', nome=setor.nome, filtro=chave) }}">{{ rotulo }}</a>
+    {% endfor %}
+  </nav>
+  {% if not itens %}
+    <p class="suave vazio--compacto">
+      {% if filtro == 'pendentes' %}Nenhum item pendente neste setor.{% else %}Nenhum item nesta lista.{% endif %}
+    </p>
+  {% endif %}
+{% endif %}
+
+<div class="lista">
+  {% for item in itens %}
+    {{ ui.cartao_item(item, setor.nome) }}
+  {% endfor %}
+</div>
+
+{% if vindos and not consulta %}
+  <section class="bloco">
+    <h2>Encontrados aqui, mas pertencem a outro setor ({{ vindos | length }})</h2>
+    <div class="lista">
+      {% for item in vindos %}
+        {{ ui.cartao_item(item, setor.nome, mostrar_setor=True) }}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

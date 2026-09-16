@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% import "_componentes.html" as ui with context %}
+{% block titulo %}Setores{% endblock %}
+
+{% block conteudo %}
+{% if not resumo.total %}
+  <section class="vazio">
+    <h1>Nenhum equipamento carregado</h1>
+    <p>Exporte a auditoria do Effort em Excel e importe o arquivo aqui para começar o inventário.</p>
+    <a class="botao botao--principal" href="{{ url_for('arquivos.pagina') }}">Importar planilha</a>
+  </section>
+{% else %}
+
+  <section class="painel">
+    <div class="painel__principal">
+      <p class="painel__numero">{{ resumo.auditados }} <small>de {{ resumo.total }}</small></p>
+      <p class="painel__legenda">equipamentos auditados</p>
+      {{ ui.progresso(resumo.auditados, resumo.total, (100 * resumo.auditados / resumo.total) | round | int) }}
+    </div>
+    <ul class="painel__extras">
+      <li><strong>{{ resumo.pendentes }}</strong> pendentes</li>
+      <li>
+        <a href="{{ url_for('principal.tags_fora_do_padrao') }}">
+          <strong>{{ resumo.tags_fora_padrao }}</strong> TAGs fora do padrão
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('arquivos.conflitos') }}">
+          <strong>{{ resumo.conflitos }}</strong> conflitos a resolver
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  {{ ui.busca(url_for('principal.inicio'), consulta, 'Pesquisar em todos os setores: TAG, patrimônio, nº de série ou nome', autofoco=False) }}
+
+  {% if consulta %}
+    <section class="bloco">
+      <h2>{{ resultados | length }} resultado(s) para “{{ consulta }}”</h2>
+      {% if not resultados %}
+        <p class="suave">Nenhum equipamento encontrado. Confira a digitação ou pesquise por outro dado.</p>
+      {% endif %}
+      <div class="lista">
+        {% for item in resultados %}
+          {{ ui.cartao_item(item, item.setor_grupo, mostrar_setor=True) }}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="bloco">
+    <h2>Setores</h2>
+    <ul class="setores">
+      {% for s in setores %}
+        <li>
+          <a class="setor {% if s.auditados == s.total %}setor--completo{% endif %}"
+             href="{{ url_for('principal.setor', nome=s.nome) }}">
+            <span class="setor__nome">{{ s.nome }}</span>
+            <span class="setor__conta">{{ s.auditados }}/{{ s.total }}</span>
+            {{ ui.progresso(s.auditados, s.total, s.percentual) }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,57 @@
+{# Pedaços de interface usados em várias telas #}
+
+{% macro progresso(auditados, total, percentual) %}
+  <div class="progresso" role="progressbar" aria-valuenow="{{ percentual }}"
+       aria-valuemin="0" aria-valuemax="100">
+    <div class="progresso__barra" style="width: {{ percentual }}%"></div>
+  </div>
+{% endmacro %}
+
+{% macro estado_classe(item) -%}
+  {%- if item.pendente -%}pendente
+  {%- elif item.motivo in ('Conforme', 'Encontrado em outro local') -%}conforme
+  {%- else -%}atencao{%- endif -%}
+{%- endmacro %}
+
+{% macro cartao_item(item, voltar, encontrado_em=None, mostrar_setor=False) %}
+  <a class="item item--{{ estado_classe(item) }}"
+     href="{{ url_for('auditoria.auditar', item_id=item.id, voltar=voltar, encontrado_em=encontrado_em) }}">
+    <div class="item__topo">
+      <span class="item__nome">{{ item.equipamento | nome_curto }}</span>
+      <span class="selo selo--{{ estado_classe(item) }}">
+        {{ rotulos_motivo.get(item.motivo, item.motivo) }}
+      </span>
+    </div>
+    <dl class="item__ids">
+      <div><dt>TAG</dt><dd>{{ item.tag or '—' }}</dd></div>
+      <div><dt>Nº série</dt><dd>{{ item.ns or '—' }}</dd></div>
+      <div><dt>Patrimônio</dt><dd>{{ item.patrimonio or '—' }}</dd></div>
+      <div><dt>Modelo</dt><dd>{{ item.modelo or '—' }}</dd></div>
+    </dl>
+    {% if not item.tag_ok or mostrar_setor or (not item.pendente and item.setor_origem and item.setor_atual != item.setor_origem) or item.observacao %}
+    <div class="item__notas">
+      {% if not item.tag_ok %}
+        <span class="nota nota--ambar">TAG fora do padrão</span>
+      {% endif %}
+      {% if mostrar_setor %}
+        <span class="nota nota--azul">Setor de origem: {{ item.setor_grupo }}</span>
+      {% endif %}
+      {% if not item.pendente and item.setor_origem and item.setor_atual != item.setor_origem %}
+        <span class="nota nota--azul">Encontrado em {{ item.setor_atual }}</span>
+      {% endif %}
+      {% if item.observacao %}
+        <span class="nota">{{ item.observacao }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+{% macro busca(acao, consulta, placeholder, autofoco=True) %}
+  <form class="busca" method="get" action="{{ acao }}" role="search">
+    <input type="search" name="q" value="{{ consulta }}" placeholder="{{ placeholder }}"
+           autocomplete="off" {% if autofoco %}autofocus{% endif %}
+           aria-label="Pesquisar equipamento">
+    <button type="submit" class="botao botao--principal">Pesquisar</button>
+  </form>
+{% endmacro %}

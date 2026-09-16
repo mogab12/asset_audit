@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "_componentes.html" as ui with context %}
+{% block titulo %}TAGs fora do padrão{% endblock %}
+
+{% block conteudo %}
+<a class="voltar" href="{{ url_for('principal.inicio') }}">Todos os setores</a>
+<h1>TAGs fora do padrão ({{ itens | length }})</h1>
+<p class="suave">O padrão esperado é letras seguidas de números, como BINF1234 ou BINF-1234. Estas plaquetas devem ser trocadas.</p>
+
+{% if not itens %}
+  <p class="vazio vazio--compacto">Todas as TAGs seguem o padrão.</p>
+{% endif %}
+
+{% for setor, grupo in itens | groupby('setor_grupo') %}
+  <section class="bloco">
+    <h2>{{ setor }} ({{ grupo | length }})</h2>
+    <div class="lista">
+      {% for item in grupo %}{{ ui.cartao_item(item, setor) }}{% endfor %}
+    </div>
+  </section>
+{% endfor %}
+{% endblock %}

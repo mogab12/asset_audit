@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Planilhas{% endblock %}
+
+{% block conteudo %}
+<h1>Planilhas</h1>
+
+<section class="bloco cartao">
+  <h2>Importar</h2>
+  <p class="suave">
+    Aceita a planilha exportada pelo Effort e as planilhas exportadas por este aplicativo.
+    Você pode selecionar vários arquivos de uma vez para juntar o trabalho de vários auditores.
+  </p>
+  <form method="post" action="{{ url_for('arquivos.importar') }}" enctype="multipart/form-data"
+        class="formulario" id="form-importar">
+    <div class="campo">
+      <label for="arquivos">Arquivos (.xls ou .xlsx)</label>
+      <input id="arquivos" type="file" name="arquivos" accept=".xls,.xlsx" multiple required>
+    </div>
+    <fieldset class="campo">
+      <legend>O que fazer com a base atual ({{ resumo.total }} equipamentos)</legend>
+      <div class="opcoes opcoes--coluna">
+        <label class="opcao">
+          <input type="radio" name="modo" value="mesclar" checked>
+          <span><strong>Juntar</strong> com o que já existe. Itens repetidos seguem as regras de mesclagem.</span>
+        </label>
+        <label class="opcao">
+          <input type="radio" name="modo" value="substituir">
+          <span><strong>Substituir</strong> tudo. Apaga a base atual antes de importar (use para iniciar uma nova auditoria).</span>
+        </label>
+      </div>
+    </fieldset>
+    <button type="submit" class="botao botao--principal">Importar planilhas</button>
+  </form>
+  <details class="regras">
+    <summary>Como os itens repetidos são tratados</summary>
+    <ul>
+      <li>Os dois pendentes: mantém qualquer um.</li>
+      <li>Um pendente e outro auditado: fica o auditado.</li>
+      <li>Os dois auditados e iguais: mantém qualquer um.</li>
+      <li>Os dois auditados e diferentes: vira conflito e você escolhe qual fica.</li>
+    </ul>
+  </details>
+</section>
+
+<section class="bloco cartao">
+  <h2>Exportar</h2>
+  <p class="suave">
+    Gera uma planilha com as mesmas colunas do Effort, contendo todos os equipamentos
+    ({{ resumo.auditados }} auditados, {{ resumo.pendentes }} pendentes).
+    Envie esse arquivo para quem vai consolidar a auditoria.
+  </p>
+  {% if resumo.conflitos %}
+    <p class="dica dica--ambar">Há {{ resumo.conflitos }} conflito(s) sem decisão.</p>
+    <div class="acoes">
+      <a class="botao botao--principal" href="{{ url_for('arquivos.conflitos') }}">Resolver conflitos</a>
+      <a class="botao" href="{{ url_for('arquivos.exportar', confirmar=1) }}">Exportar assim mesmo</a>
+    </div>
+  {% else %}
+    <a class="botao botao--principal" href="{{ url_for('arquivos.exportar') }}">Exportar planilha</a>
+  {% endif %}
+</section>
+
+<section class="bloco cartao cartao--perigo">
+  <h2>Apagar base</h2>
+  <p class="suave">Remove todos os equipamentos e conflitos deste computador. Exporte antes se precisar guardar o trabalho.</p>
+  <form method="post" action="{{ url_for('arquivos.limpar') }}" class="linha-form">
+    <input name="confirmacao" placeholder="Digite APAGAR" autocomplete="off" aria-label="Confirmação">
+    <button type="submit" class="botao botao--perigo">Apagar tudo</button>
+  </form>
+</section>
+{% endblock %}

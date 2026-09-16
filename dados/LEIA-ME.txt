@@ -1,0 +1,1 @@
+O banco de dados (auditoria.db) é criado automaticamente nesta pasta.
