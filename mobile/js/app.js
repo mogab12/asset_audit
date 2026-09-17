@@ -55,6 +55,11 @@ async function iniciar() {
   } catch (erro) {
     mostrarAviso("Não foi possível carregar a base padrão de equipamentos.", "erro");
   }
+  try {
+    await arquivos.garantirAuditoriaInicial();
+  } catch (erro) {
+    mostrarAviso("Não foi possível carregar a planilha de auditoria de exemplo.", "erro");
+  }
 
   router.registrar("/", inicio.render);
   router.registrar("/setor/:nome", setor.render);

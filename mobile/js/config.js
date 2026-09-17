@@ -64,3 +64,7 @@ export const COLUNAS_REFERENCIA_EFFORT = {
 export const PADRAO_URL_EFFORT = /eqp=(\d+)/;
 
 export const ARQUIVO_EQUIPAMENTOS_PADRAO = "dados/Equipamentos.xlsx";
+
+// Planilha de auditoria de exemplo, importada automaticamente na primeira
+// abertura do app (só se ainda não houver nenhum equipamento na base).
+export const ARQUIVO_AUDITORIA_PADRAO = "dados/Auditoria.xlsx";

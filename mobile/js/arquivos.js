@@ -14,6 +14,18 @@ export async function garantirReferenciaInicial() {
   await repositorio.salvarReferenciaEffort(linhas);
 }
 
+// Chamado uma vez na inicialização: se a base de equipamentos auditados
+// estiver vazia (primeira vez que o app abre), importa a planilha de
+// exemplo, exatamente como se o usuário a tivesse importado manualmente.
+export async function garantirAuditoriaInicial() {
+  if (repositorio.resumo().total > 0) return;
+  const resposta = await fetch(config.ARQUIVO_AUDITORIA_PADRAO);
+  if (!resposta.ok) return;
+  const bytes = await resposta.arrayBuffer();
+  const itens = planilha.ler(bytes);
+  await mesclagem.importar(itens, "Auditoria.xlsx (exemplo)", false);
+}
+
 export async function reverterEquipamentos() {
   const resposta = await fetch(config.ARQUIVO_EQUIPAMENTOS_PADRAO);
   const bytes = await resposta.arrayBuffer();

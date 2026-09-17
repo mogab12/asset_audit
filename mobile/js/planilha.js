@@ -24,6 +24,26 @@ function mapaTituloParaCampo(colunas) {
 const TITULO_PARA_CAMPO = mapaTituloParaCampo(config.COLUNAS);
 const TITULO_PARA_CAMPO_EFFORT = mapaTituloParaCampo(config.COLUNAS_REFERENCIA_EFFORT);
 
+// O Effort às vezes exporta a coluna "Motivo não Conformidade" com valores
+// como "Encontrado em outro local", "Equipamento Antigo" ou "Novo Equipamento"
+// — classificações que o próprio app já deriva sozinho durante a auditoria
+// (comparando setor de origem/atual) e que, vindas prontas de uma planilha
+// importada, não têm garantia de estarem corretas. Por isso, toda vez que uma
+// planilha é importada (inclusive a de exemplo em dados_padrao), esses itens
+// voltam para "Pendente" — ficam sinalizados para serem auditados de novo.
+const MOTIVOS_A_REVISAR_NA_IMPORTACAO = new Set([
+  config.MOTIVO_OUTRO_LOCAL,
+  ...Object.keys(config.OUTROS_MOTIVOS),
+]);
+
+function revisarMotivoImportado(item) {
+  if (MOTIVOS_A_REVISAR_NA_IMPORTACAO.has(item.motivo)) {
+    item.motivo = config.MOTIVO_PENDENTE;
+    item.status = config.STATUS_NAO_CONFORME;
+  }
+  return item;
+}
+
 // Recebe os bytes do arquivo (ArrayBuffer/Uint8Array) e devolve a primeira
 // aba como uma lista de linhas (cada linha uma lista de valores).
 function linhasDaPrimeiraAba(bytes) {
@@ -69,7 +89,7 @@ export function ler(bytes) {
   for (const linha of linhas) {
     const item = {};
     for (const [indice, campo] of mapa) item[campo] = texto(linha[indice]);
-    if (Object.values(item).some(Boolean)) itens.push(item);
+    if (Object.values(item).some(Boolean)) itens.push(revisarMotivoImportado(item));
   }
   return itens;
 }

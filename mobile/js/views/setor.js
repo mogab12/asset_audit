@@ -56,7 +56,7 @@ export async function render(container, { params, query }) {
     <dialog id="leitor-qr" class="leitor-qr">
       <div class="leitor-qr__topo">
         <strong>Ler QR code</strong>
-        <button type="button" class="botao botao--discreto" id="botao-fechar-qr">Fechar</button>
+        <button type="button" class="botao botao--perigo" id="botao-fechar-qr">Fechar</button>
       </div>
       <div class="leitor-qr__camera" id="leitor-qr-camera">
         <video id="leitor-qr-video" playsinline muted autoplay></video>

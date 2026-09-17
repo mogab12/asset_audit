@@ -9,6 +9,7 @@ const ARQUIVOS = [
   "./manifest.json",
   "./css/estilo.css",
   "./dados/Equipamentos.xlsx",
+  "./dados/Auditoria.xlsx",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./js/app.js",

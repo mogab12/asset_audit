@@ -88,6 +88,21 @@ test("planilha: arquivo que não é Excel lança ErroPlanilha", () => {
   assert.throws(() => planilha.ler(new Uint8Array([0, 1, 2, 3])), planilha.ErroPlanilha);
 });
 
+test("planilha: motivos que o app deriva sozinho voltam para Pendente ao importar", async () => {
+  const itens = [
+    item({ motivo: "Encontrado em outro local", status: "Conforme" }),
+    item({ motivo: "Equipamento Antigo", tag: "X-2", chave: "NOVO|X-2" }),
+    item({ motivo: "Novo Equipamento", tag: "X-3", chave: "NOVO|X-3" }),
+    item(AUDITADO_A), // "Conforme" não deve ser mexido
+  ];
+  const blob = planilha.gerar(itens);
+  const bytes = await blob.arrayBuffer();
+  const lidos = planilha.ler(bytes);
+  assert.deepEqual(lidos.map((i) => i.motivo),
+    ["Pendente", "Pendente", "Pendente", "Conforme"]);
+  assert.equal(lidos[0].status, "Não conforme");
+});
+
 test("planilha: lê a base real de equipamentos do Effort (dados/Equipamentos.xlsx)", async () => {
   const bytes = readFileSync(new URL("../dados/Equipamentos.xlsx", import.meta.url));
   const linhas = planilha.lerReferenciaEffort(bytes);

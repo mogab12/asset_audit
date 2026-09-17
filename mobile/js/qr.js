@@ -34,6 +34,7 @@ export function configurarLeitor(container, { setorAtual }) {
   const BarcodeScanner = window.Capacitor?.isNativePlatform?.()
     ? window.Capacitor.Plugins.BarcodeScanner
     : null;
+  const Haptics = window.Capacitor?.isNativePlatform?.() ? window.Capacitor.Plugins.Haptics : null;
   const detectorWeb = criarDetectorWeb();
   if (!BarcodeScanner && !detectorWeb && typeof window.jsQR === "undefined") return () => {};
 
@@ -51,6 +52,20 @@ export function configurarLeitor(container, { setorAtual }) {
     }
   }
 
+  // navigator.vibrate() sozinho não funciona de forma confiável aqui: o
+  // navegador só libera a Vibration API quando a chamada acontece dentro de
+  // um gesto do usuário (toque/clique), e a leitura do QR code chega de um
+  // evento assíncrono do plugin de câmera, não de um clique — por isso o
+  // plugin nativo de Haptics (chama o vibrador do Android direto, sem essa
+  // restrição do navegador) é usado como primeira opção dentro do app.
+  function vibrar() {
+    if (Haptics) {
+      Haptics.vibrate({ duration: 200 }).catch(() => {});
+    } else if (navigator.vibrate) {
+      navigator.vibrate(200);
+    }
+  }
+
   function mostrarStatus(mensagem, tipo) {
     status.textContent = mensagem;
     status.className = "leitor-qr__status" + (tipo ? " leitor-qr__status--" + tipo : "");
@@ -63,6 +78,7 @@ export function configurarLeitor(container, { setorAtual }) {
     ultimoTexto = texto;
     ultimaLeituraEm = agora;
     aguardandoResposta = true;
+    vibrar();
     mostrarStatus("Lendo " + texto + "…");
 
     try {

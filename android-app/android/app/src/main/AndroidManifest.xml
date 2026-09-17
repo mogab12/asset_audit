@@ -49,6 +49,10 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- Vibração ao ler um QR code com sucesso (não é permissão perigosa,
+         não expõe nenhum dado, não precisa de autorização em tempo real). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- O ML Kit traz por baixo dos panos uma lib de telemetria do Google
          (transport-backend-cct) que pede internet só para enviar estatísticas
          de uso — a leitura do QR code em si roda local. Removemos essa
