@@ -13,7 +13,7 @@
 //    navegador suporta) ou jsQR (script clássico, window.jsQR) com um zoom
 //    digital para compensar a limitação dele com códigos pequenos.
 import * as auditoria from "./auditoria.js";
-import { caminhoAuditor } from "./router-caminhos.js";
+import { caminhoAuditor, caminhoItem } from "./router-caminhos.js";
 
 export function configurarLeitor(container, { setorAtual }) {
   const botaoAbrir = container.querySelector("#botao-ler-qr");
@@ -71,6 +71,22 @@ export function configurarLeitor(container, { setorAtual }) {
     status.className = "leitor-qr__status" + (tipo ? " leitor-qr__status--" + tipo : "");
   }
 
+  // Mesmo status, mas com um botão que leva direto para a tela do equipamento
+  // — para o operador conferir ou adicionar uma observação sem sair do fluxo.
+  function mostrarResultado(mensagem, tipo, itemId) {
+    status.className = "leitor-qr__status" + (tipo ? " leitor-qr__status--" + tipo : "");
+    status.replaceChildren(mensagem);
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "botao botao--principal leitor-qr__botao-item";
+    botao.textContent = "Ver equipamento / adicionar observação";
+    botao.addEventListener("click", () => {
+      dialogo.close();
+      location.hash = caminhoItem(itemId, { voltar: setorAtual });
+    });
+    status.appendChild(botao);
+  }
+
   async function processarTexto(texto) {
     const agora = Date.now();
     if (texto === ultimoTexto && agora - ultimaLeituraEm < 4000) return;
@@ -93,7 +109,7 @@ export function configurarLeitor(container, { setorAtual }) {
         return;
       }
       const tipo = dados.motivo === "Conforme" ? "ok" : "aviso";
-      mostrarStatus(dados.identificacao + " registrado: " + dados.rotulo + ".", tipo);
+      mostrarResultado(dados.identificacao + " registrado: " + dados.rotulo + ".", tipo, dados.itemId);
     } catch (erro) {
       aguardandoResposta = false;
       mostrarStatus("Falha ao registrar a leitura. Tente de novo.", "erro");

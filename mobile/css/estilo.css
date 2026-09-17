@@ -328,7 +328,11 @@ html.leitor-qr-ativo .leitor-qr__mira { box-shadow: none; }
   border-radius: var(--raio);
   background: var(--cinza-claro);
   color: var(--suave);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }
+.leitor-qr__botao-item { align-self: stretch; }
 .leitor-qr__status--ok { background: var(--verde-claro); color: var(--verde-escuro); }
 .leitor-qr__status--aviso { background: var(--ambar-claro); color: var(--ambar); }
 .leitor-qr__status--erro { background: var(--vermelho-claro); color: var(--vermelho); }
