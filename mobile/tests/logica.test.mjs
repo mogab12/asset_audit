@@ -88,7 +88,26 @@ test("planilha: arquivo que não é Excel lança ErroPlanilha", () => {
   assert.throws(() => planilha.ler(new Uint8Array([0, 1, 2, 3])), planilha.ErroPlanilha);
 });
 
-test("planilha: motivos que o app deriva sozinho voltam para Pendente ao importar", async () => {
+test("planilha: mesclagem normal preserva motivos que o app deriva sozinho", async () => {
+  // Regressão: importar (mesclar) a planilha exportada por outro celular NÃO
+  // pode voltar essas classificações para "Pendente" — se voltasse, a regra
+  // de mesclagem descartaria a auditoria já feita (pendente perde para
+  // qualquer coisa não pendente), e o total de auditados cairia depois de
+  // importar, o que nunca deveria acontecer numa mesclagem.
+  const itens = [
+    item({ motivo: "Encontrado em outro local", status: "Conforme" }),
+    item({ motivo: "Equipamento Antigo", tag: "X-2", chave: "NOVO|X-2" }),
+    item({ motivo: "Novo Equipamento", tag: "X-3", chave: "NOVO|X-3" }),
+    item(AUDITADO_A),
+  ];
+  const blob = planilha.gerar(itens);
+  const bytes = await blob.arrayBuffer();
+  const lidos = planilha.ler(bytes);
+  assert.deepEqual(lidos.map((i) => i.motivo),
+    ["Encontrado em outro local", "Equipamento Antigo", "Novo Equipamento", "Conforme"]);
+});
+
+test("planilha: revisarMotivos volta para Pendente (usado só na planilha de exemplo)", async () => {
   const itens = [
     item({ motivo: "Encontrado em outro local", status: "Conforme" }),
     item({ motivo: "Equipamento Antigo", tag: "X-2", chave: "NOVO|X-2" }),
@@ -97,7 +116,7 @@ test("planilha: motivos que o app deriva sozinho voltam para Pendente ao importa
   ];
   const blob = planilha.gerar(itens);
   const bytes = await blob.arrayBuffer();
-  const lidos = planilha.ler(bytes);
+  const lidos = planilha.ler(bytes, { revisarMotivos: true });
   assert.deepEqual(lidos.map((i) => i.motivo),
     ["Pendente", "Pendente", "Pendente", "Conforme"]);
   assert.equal(lidos[0].status, "Não conforme");

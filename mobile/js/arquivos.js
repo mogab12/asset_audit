@@ -22,7 +22,7 @@ export async function garantirAuditoriaInicial() {
   const resposta = await fetch(config.ARQUIVO_AUDITORIA_PADRAO);
   if (!resposta.ok) return;
   const bytes = await resposta.arrayBuffer();
-  const itens = planilha.ler(bytes);
+  const itens = planilha.ler(bytes, { revisarMotivos: true });
   await mesclagem.importar(itens, "Auditoria.xlsx (exemplo)", false);
 }
 

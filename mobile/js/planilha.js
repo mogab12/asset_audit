@@ -24,13 +24,19 @@ function mapaTituloParaCampo(colunas) {
 const TITULO_PARA_CAMPO = mapaTituloParaCampo(config.COLUNAS);
 const TITULO_PARA_CAMPO_EFFORT = mapaTituloParaCampo(config.COLUNAS_REFERENCIA_EFFORT);
 
-// O Effort às vezes exporta a coluna "Motivo não Conformidade" com valores
-// como "Encontrado em outro local", "Equipamento Antigo" ou "Novo Equipamento"
-// — classificações que o próprio app já deriva sozinho durante a auditoria
-// (comparando setor de origem/atual) e que, vindas prontas de uma planilha
-// importada, não têm garantia de estarem corretas. Por isso, toda vez que uma
-// planilha é importada (inclusive a de exemplo em dados_padrao), esses itens
-// voltam para "Pendente" — ficam sinalizados para serem auditados de novo.
+// Classificações que o próprio app deriva sozinho durante a auditoria
+// (comparando setor de origem/atual). A planilha de exemplo carregada na
+// primeira abertura do app (dados_padrao/Auditoria.xlsx) não tem garantia de
+// que essas classificações ainda estejam corretas, então elas voltam para
+// "Pendente" nesse caso — ver `revisarMotivos` em `ler()`.
+//
+// Isso NÃO deve ser aplicado ao mesclar planilhas exportadas por este próprio
+// aplicativo (fluxo normal entre auditores): esses valores já são o resultado
+// de uma auditoria real feita em outro celular e devem ser respeitados; do
+// contrário a mesclagem os transforma em "Pendente" e a regra de mesclagem
+// (um pendente e outro não pendente -> fica o não pendente) descarta o
+// trabalho já feito, fazendo o total de equipamentos auditados CAIR depois
+// de importar uma planilha — que é exatamente o oposto do esperado.
 const MOTIVOS_A_REVISAR_NA_IMPORTACAO = new Set([
   config.MOTIVO_OUTRO_LOCAL,
   ...Object.keys(config.OUTROS_MOTIVOS),
@@ -75,7 +81,10 @@ function lerComMapa(bytes, mapaTitulos) {
 }
 
 // Recebe os bytes do arquivo e devolve uma lista de objetos.
-export function ler(bytes) {
+// `revisarMotivos`: true só para a planilha de exemplo (garantirAuditoriaInicial).
+// Ao mesclar planilhas de auditores (uso normal), deixe false para não perder
+// auditorias já feitas em outro celular — ver MOTIVOS_A_REVISAR_NA_IMPORTACAO acima.
+export function ler(bytes, { revisarMotivos = false } = {}) {
   const { mapa, linhas } = lerComMapa(bytes, TITULO_PARA_CAMPO);
   const camposEncontrados = new Set(mapa.values());
   if (!camposEncontrados.has("equipamento") ||
@@ -89,7 +98,9 @@ export function ler(bytes) {
   for (const linha of linhas) {
     const item = {};
     for (const [indice, campo] of mapa) item[campo] = texto(linha[indice]);
-    if (Object.values(item).some(Boolean)) itens.push(revisarMotivoImportado(item));
+    if (Object.values(item).some(Boolean)) {
+      itens.push(revisarMotivos ? revisarMotivoImportado(item) : item);
+    }
   }
   return itens;
 }
