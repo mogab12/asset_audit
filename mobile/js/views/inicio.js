@@ -1,7 +1,7 @@
 // Tela inicial: setores, pesquisa (port de principal.inicio()).
 import * as repositorio from "../repositorio.js";
-import { termosPesquisa, escapeHtml } from "../utils.js";
-import { busca, cartaoItem, progresso, ligarFormulariosBusca } from "../componentes.js";
+import { setorCorresponde, escapeHtml } from "../utils.js";
+import { busca, progresso, ligarFormulariosBusca } from "../componentes.js";
 import { caminhoArquivos, caminhoSetor, caminhoTagsForaDoPadrao, caminhoConflitos } from "../router-caminhos.js";
 import { navegarPara } from "../router.js";
 import { atualizarCabecalho } from "../layout.js";
@@ -21,9 +21,9 @@ export async function render(container, { query }) {
     return;
   }
 
-  const resultados = consulta ? repositorio.pesquisar(termosPesquisa(consulta)) : [];
   const percentualGeral = resumo.total ? Math.round((100 * resumo.auditados) / resumo.total) : 0;
   const setores = repositorio.setores();
+  const setoresExibidos = consulta ? setores.filter((s) => setorCorresponde(s.nome, consulta)) : setores;
 
   container.innerHTML = `
     <section class="painel">
@@ -39,21 +39,13 @@ export async function render(container, { query }) {
       </ul>
     </section>
 
-    ${busca("/", consulta, "Pesquisar em todos os setores: TAG, patrimônio, nº de série ou nome", { autofoco: false })}
-
-    ${consulta ? `
-      <section class="bloco">
-        <h2>${resultados.length} resultado(s) para “${escapeHtml(consulta)}”</h2>
-        ${!resultados.length ? '<p class="suave">Nenhum equipamento encontrado. Confira a digitação ou pesquise por outro dado.</p>' : ""}
-        <div class="lista">
-          ${resultados.map((item) => cartaoItem(item, item.setor_grupo, { mostrarSetor: true })).join("")}
-        </div>
-      </section>` : ""}
+    ${busca("/", consulta, "Pesquisar setor: nome ou sigla (CME, UTI, PS...)", { autofoco: false, ariaLabel: "Pesquisar setor" })}
 
     <section class="bloco">
-      <h2>Setores</h2>
+      <h2>${consulta ? `${setoresExibidos.length} setor(es) para “${escapeHtml(consulta)}”` : "Setores"}</h2>
+      ${consulta && !setoresExibidos.length ? '<p class="suave">Nenhum setor encontrado. Confira a digitação ou tente outra sigla/nome.</p>' : ""}
       <ul class="setores">
-        ${setores.map((s) => `
+        ${setoresExibidos.map((s) => `
           <li>
             <a class="setor ${s.auditados === s.total ? "setor--completo" : ""}" href="${caminhoSetor(s.nome)}">
               <span class="setor__nome">${escapeHtml(s.nome)}</span>

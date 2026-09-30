@@ -27,6 +27,51 @@ export function termosPesquisa(consulta) {
     .filter(Boolean);
 }
 
+// Siglas/abreviações comuns de setores hospitalares, para a busca de setores
+// encontrar tanto a sigla quanto o nome por extenso (e vice-versa).
+const SINONIMOS_SETOR = [
+  ["CME", "CENTRAL DE MATERIAL E ESTERILIZACAO"],
+  ["UTI", "CTI", "UNIDADE DE TERAPIA INTENSIVA", "CENTRO DE TERAPIA INTENSIVA"],
+  ["PS", "PRONTO SOCORRO", "EMERGENCIA"],
+  ["PA", "PRONTO ATENDIMENTO"],
+  ["CC", "CENTRO CIRURGICO"],
+  ["CO", "CENTRO OBSTETRICO"],
+  ["UBS", "UNIDADE BASICA DE SAUDE"],
+  ["RX", "RAIO X", "RADIOLOGIA", "DIAGNOSTICO POR IMAGEM"],
+  ["NEO", "NEONATOLOGIA", "UTI NEONATAL"],
+  ["PED", "PEDIATRIA"],
+  ["MAT", "MATERNIDADE", "OBSTETRICIA"],
+  ["AMB", "AMBULATORIO"],
+  ["FARM", "FARMACIA"],
+  ["LAB", "LABORATORIO"],
+  ["UI", "UNIDADE DE INTERNACAO", "INTERNACAO"],
+  ["ENF", "ENFERMARIA"],
+].map((grupo) => grupo.map(compactar));
+
+// Para uma palavra digitada, retorna as formas equivalentes (sigla e nome por
+// extenso) já compactadas, incluindo a própria palavra.
+function formasEquivalentes(palavraCompactada) {
+  const formas = new Set([palavraCompactada]);
+  for (const grupo of SINONIMOS_SETOR) {
+    const igual = grupo.includes(palavraCompactada);
+    const parcial = palavraCompactada.length >= 4 &&
+      grupo.some((f) => f.includes(palavraCompactada) || palavraCompactada.includes(f));
+    if (igual || parcial) grupo.forEach((f) => formas.add(f));
+  }
+  return [...formas];
+}
+
+// Pesquisa de setores: cada palavra digitada deve casar com o nome do setor,
+// direto ou por uma sigla/forma por extenso equivalente (ex.: "CME" encontra
+// "Central de Material e Esterilização", "unidade" encontra "UTI", "PS"
+// encontra "Pronto Socorro").
+export function setorCorresponde(nomeSetor, consulta) {
+  const palavras = termosPesquisa(consulta);
+  if (!palavras.length) return false;
+  const alvo = compactar(nomeSetor);
+  return palavras.every((palavra) => formasEquivalentes(palavra).some((forma) => alvo.includes(forma)));
+}
+
 export function tagValida(tag) {
   tag = texto(tag).toUpperCase();
   return !tag || PADRAO_TAG.test(tag);

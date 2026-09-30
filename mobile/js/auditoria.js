@@ -89,10 +89,14 @@ export async function escanear({ texto: textoLido, setor }) {
     }
   }
 
+  // Precisa ser lido antes de aplicarAuditoria() sobrescrever o motivo: é o
+  // que diferencia um equipamento visto pela primeira vez de um que já foi
+  // auditado antes (por exemplo, numa visita anterior ao mesmo setor).
+  const jaAuditado = !repositorio.ehPendente(item);
   const motivo = await aplicarAuditoria(item, setorAtual || item.setor_atual, config.MOTIVO_CONFORME);
   return {
     ok: true, itemId: item.id, identificacao: identificacaoDoItem(item),
-    motivo, rotulo: rotuloMotivo(motivo),
+    motivo, rotulo: rotuloMotivo(motivo), jaAuditado,
   };
 }
 

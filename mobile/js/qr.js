@@ -66,8 +66,19 @@ export function configurarLeitor(container, { setorAtual }) {
     }
   }
 
+  // Segundo toque, usado quando o equipamento já tinha sido auditado antes
+  // (revisita ao setor) — com um intervalo dá pra sentir dois toques
+  // distintos em vez de uma vibração só mais longa.
+  function vibrarDeNovo() {
+    setTimeout(vibrar, 300);
+  }
+
+  // Ícones ao lado da cor: quem enxerga mal contraste não fica dependendo só
+  // do verde/âmbar/vermelho de fundo para saber se deu certo ou não.
+  const ICONE_TIPO = { ok: "✓ ", aviso: "⚠ ", erro: "✕ " };
+
   function mostrarStatus(mensagem, tipo) {
-    status.textContent = mensagem;
+    status.textContent = (ICONE_TIPO[tipo] || "") + mensagem;
     status.className = "leitor-qr__status" + (tipo ? " leitor-qr__status--" + tipo : "");
   }
 
@@ -75,7 +86,7 @@ export function configurarLeitor(container, { setorAtual }) {
   // — para o operador conferir ou adicionar uma observação sem sair do fluxo.
   function mostrarResultado(mensagem, tipo, itemId) {
     status.className = "leitor-qr__status" + (tipo ? " leitor-qr__status--" + tipo : "");
-    status.replaceChildren(mensagem);
+    status.replaceChildren((ICONE_TIPO[tipo] || "") + mensagem);
     const botao = document.createElement("button");
     botao.type = "button";
     botao.className = "botao botao--principal leitor-qr__botao-item";
@@ -108,8 +119,11 @@ export function configurarLeitor(container, { setorAtual }) {
         mostrarStatus(dados.erro || "Não foi possível registrar a leitura.", "erro");
         return;
       }
+      if (dados.jaAuditado) vibrarDeNovo();
       const tipo = dados.motivo === "Conforme" ? "ok" : "aviso";
-      mostrarResultado(dados.identificacao + " registrado: " + dados.rotulo + ".", tipo, dados.itemId);
+      const mensagem = dados.identificacao + " registrado: " + dados.rotulo + "." +
+        (dados.jaAuditado ? " Equipamento já tinha sido registrado antes." : "");
+      mostrarResultado(mensagem, tipo, dados.itemId);
     } catch (erro) {
       aguardandoResposta = false;
       mostrarStatus("Falha ao registrar a leitura. Tente de novo.", "erro");

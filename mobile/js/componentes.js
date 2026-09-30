@@ -23,6 +23,10 @@ export function estadoClasse(item) {
   return "atencao";
 }
 
+// Ícones ao lado da cor nos selos de estado: quem enxerga mal contraste ou
+// tem dificuldade para diferenciar verde/âmbar não fica dependendo só da cor.
+const ICONE_ESTADO = { conforme: "✓ ", atencao: "⚠ ", pendente: "" };
+
 export function cartaoItem(item, voltar, { encontradoEm = null, mostrarSetor = false } = {}) {
   const classe = estadoClasse(item);
   const href = caminhoItem(item.id, { voltar, encontrado_em: encontradoEm });
@@ -39,7 +43,7 @@ export function cartaoItem(item, voltar, { encontradoEm = null, mostrarSetor = f
     <a class="item item--${classe}" href="${href}">
       <div class="item__topo">
         <span class="item__nome">${escapeHtml(nomeCurto(item.equipamento))}</span>
-        <span class="selo selo--${classe}">${escapeHtml(rotuloMotivo(item.motivo))}</span>
+        <span class="selo selo--${classe}">${ICONE_ESTADO[classe]}${escapeHtml(rotuloMotivo(item.motivo))}</span>
       </div>
       <dl class="item__ids">
         <div><dt>TAG</dt><dd>${escapeHtml(item.tag) || "—"}</dd></div>
@@ -54,12 +58,12 @@ export function cartaoItem(item, voltar, { encontradoEm = null, mostrarSetor = f
 // Formulário de pesquisa: navega por hash (sem recarregar a página).
 // "caminhoRaw" é o caminho sem codificar (ex.: "/" ou "/setor/Nome do setor"),
 // no mesmo formato que router.navegarPara() espera.
-export function busca(caminhoRaw, consulta, placeholder, { autofoco = true, id = "" } = {}) {
+export function busca(caminhoRaw, consulta, placeholder, { autofoco = true, id = "", ariaLabel = "Pesquisar equipamento" } = {}) {
   const idAttr = id || `busca-${Math.random().toString(36).slice(2)}`;
   return `
     <form class="busca" data-caminho-raw="${escapeHtml(caminhoRaw)}" role="search" id="${idAttr}">
       <input type="search" name="q" value="${escapeHtml(consulta)}" placeholder="${escapeHtml(placeholder)}"
-             autocomplete="off" ${autofoco ? "autofocus" : ""} aria-label="Pesquisar equipamento">
+             autocomplete="off" ${autofoco ? "autofocus" : ""} aria-label="${escapeHtml(ariaLabel)}">
       <button type="submit" class="botao botao--principal">Pesquisar</button>
     </form>`;
 }

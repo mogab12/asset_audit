@@ -412,14 +412,15 @@ html.leitor-qr-ativo .leitor-qr__mira { box-shadow: none; }
 
 .selo, .nota {
   display: inline-block;
+  max-width: 100%;
   padding: .1rem .55rem;
   border-radius: 99px;
   font-size: .8rem;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   background: var(--cinza-claro);
   color: var(--suave);
 }
-.nota { white-space: normal; }
 .selo--conforme { background: var(--verde-claro); color: var(--verde-escuro); }
 .selo--atencao, .nota--ambar { background: var(--ambar-claro); color: var(--ambar); }
 .nota--azul { background: var(--azul-claro); color: var(--azul); }
